@@ -123,7 +123,7 @@ module.exports = {
             } catch (error) {
                 console.error("Error sending email:", error);
             }
-        }
+        }    
         console.log("########### CISCO DETECTOR FINISHED ##############")
 
     }
