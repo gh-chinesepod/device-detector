@@ -39,7 +39,7 @@ module.exports = {
         const minIdle = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
         let networkDevices = await ciscoModel.findQuery({ officeLocation: process.env.officeLocation, notification: false })
-        let locations = await ciscoModel.findQuery({ lastActive: { $lt: minIdle } })
+        let locations = await ciscoLocationModel.findQuery({ lastActive: { $lt: minIdle } })
 
         // set all to offline
         await ciscoModel.updateMany(
