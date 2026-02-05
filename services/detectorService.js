@@ -16,7 +16,7 @@ module.exports = {
         }
 
         console.log("########### CISCO DETECTOR RUNNING <<" + Date.now() + ">> ##############")
-        helpers.sendSQSMessage(process.env.phoneNotification, "test from redirector")
+        // helpers.sendSQSMessage(process.env.phoneNotification, "test from redirector")
         let newDevices = []
 
         const res = await fetch("https://api.ipify.org?format=json");
