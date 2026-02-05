@@ -5,7 +5,7 @@ var ciscoLocationModel = new Model('ciscoLocationMonitoring')
 const mailgun = require('mailgun-js');
 const mg = mailgun({ apiKey: process.env.mgKey, domain: process.env.mgDomain });
 
-
+const helpers = require('../helpers')
 
 module.exports = {
     runCiscoDetector: async function () {
@@ -16,7 +16,7 @@ module.exports = {
         }
 
         console.log("########### CISCO DETECTOR RUNNING <<" + Date.now() + ">> ##############")
-
+        helpers.sendSQSMessage(process.env.phoneNotification, "test from redirector")
         let newDevices = []
 
         const res = await fetch("https://api.ipify.org?format=json");
@@ -119,6 +119,8 @@ module.exports = {
 
             try {
                 const body = await mg.messages().send(emailData);
+
+                helpers.sendSQSMessage(htmlContent)
                 console.log("Email sent successfully:", body);
             } catch (error) {
                 console.error("Error sending email:", error);
@@ -126,7 +128,9 @@ module.exports = {
         }    
         console.log("########### CISCO DETECTOR FINISHED ##############")
 
-    }
+    },
+
+
 }
 
 async function getArpList() {

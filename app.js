@@ -37,7 +37,7 @@ conn.connectToServer( async function( err, client ) { // MAIN MONGO START
   const service = require('./services/detectorService')
   // service.runCiscoDetector()
   cron.schedule("0 0 * * * *", async () => {
-    service.runCiscoDetector()
+    service.runCiscoDetector()  
   });
 
   app.use(function(req, res, next) {
