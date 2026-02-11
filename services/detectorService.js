@@ -10,36 +10,17 @@ const helpers = require('../helpers')
 module.exports = {
     runCiscoDetector: async function () {
 
-        if (!process.env.officeLocation) {
-            console.error("Please set location inside .env file.\nAfter setting officeLocation='<location name>', restart app.");
-            return;
-        }
-
-        console.log("########### CISCO DETECTOR RUNNING <<" + Date.now() + ">> ##############")
-        // helpers.sendSQSMessage(process.env.phoneNotification, "test from redirector")
         let newDevices = []
 
         const res = await fetch("https://api.ipify.org?format=json");
         const data = await res.json();
-        // console.log("Public IP:", data.ip);
-
-        // check office status
-        // let officeLocation = await ciscoLocationModel.findQuery({ officeLocation : process.env.officeLocation })
-        ciscoLocationModel.upsert(
-            { officeLocation: process.env.officeLocation },
-            {
-                officeLocation: process.env.officeLocation,
-                lastActive: new Date(),
-            }
-        )
-
         
         let devices = await getArpList();
 
         const minIdle = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
         let networkDevices = await ciscoModel.findQuery({ officeLocation: process.env.officeLocation, notification: false })
-        let locations = await ciscoLocationModel.findQuery({ lastActive: { $lt: minIdle } })
+        // let locations = await ciscoLocationModel.findQuery({ lastActive: { $lt: minIdle } })
 
         // set all to offline
         await ciscoModel.updateMany(
@@ -82,10 +63,10 @@ module.exports = {
 
         // remove devices that was already included in the previous notifications
         // networkDevices = await networkDevices
-        if(locations && locations.length > 0){
-            const location = locations.map(d => d.officeLocation).join(", <br>");
-            htmlContent += `<br><strong>Office location no recent activities</strong><br>${location}`
-        }
+        // if(locations && locations.length > 0){
+        //     const location = locations.map(d => d.officeLocation).join(", <br>");
+        //     htmlContent += `<br><strong>Office location no recent activities</strong><br>${location}`
+        // }
 
         if (networkDevices && networkDevices.length > 0) {
             const mac = networkDevices.map(d => d.mac).join(", <br>");
@@ -129,6 +110,61 @@ module.exports = {
         console.log("########### CISCO DETECTOR FINISHED ##############")
 
     },
+
+    updateServiceStatus: async function () {
+
+        // server update
+        ciscoLocationModel.upsert(
+            { officeLocation: process.env.officeLocation },
+            {
+                officeLocation: process.env.officeLocation,
+                lastActive: new Date(),
+                status: false
+            }
+        )
+    },
+
+    sendServiceStatus: async function () {
+
+        const minIdle = new Date(Date.now() - 5 * 60 * 1000); // 5min
+
+       
+        let offlineServers = await ciscoLocationModel.findQuery(
+            { lastActive: { $lt: minIdle } },
+            { status: false }
+        );
+
+        // set all to true to avoid multiple sms notification
+        ciscoLocationModel.updateMany(
+            { lastActive: { $lt: minIdle } },
+            { status: true }
+        );
+
+        // send sqs
+        if (offlineServers && offlineServers.length > 0) {
+            const servers = offlineServers.map(d => d.officeLocation).join(", <br>");
+            let message = `Hi, <br> This is a reminder that the device detector in this location(s) was offline. ${servers}`
+            helpers.sendSQSMessage(message) // send to sqs
+
+            const emailData = {
+                from: "Device Detector <dev@chinesepod.com>",
+                to: [process.env.emailNotification],
+                subject: `Device Detector APP notification`,
+                html: message
+            };
+
+            mg.messages().send(emailData);
+        }
+
+        // ciscoLocationModel.upsert(
+        //     { officeLocation: process.env.officeLocation },
+        //     {
+        //         officeLocation: process.env.officeLocation,
+        //         lastActive: new Date(),
+        //         notification: false
+        //     }
+        // )
+    }
 
 
 }

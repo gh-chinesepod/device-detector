@@ -28,17 +28,39 @@ app.use(session({
 // APP  CONTAINER =========== >> 
 let conn = require('./config/DbConnect');
 
+process.env.TZ = 'Asia/Manila';
+
 conn.connectToServer( async function( err, client ) { // MAIN MONGO START
   
   // console.log(new Date().toLocaleDateString('en-US').replace(/\//g, '-'));
   if (err) console.log(err);
   // start the rest of your app here
 
+  // const helpers = require("./helpers")
+  // await helpers.sendSQSMessage("test 2 visit <a href='mailto:test@test.cc'>test</a>")
+  // console.log("-sent-")
   const service = require('./services/detectorService')
   // service.runCiscoDetector()
-  cron.schedule("0 0 * * * *", async () => {
-    service.runCiscoDetector()  
-  });
+
+  if (!process.env.officeLocation) {
+    console.error("Please set location inside .env file.\nAfter setting officeLocation='<location name>', restart app.");
+    return;
+  } else {
+
+    cron.schedule('0 8-16 * * 1-5', () => {
+      service.runCiscoDetector()  
+    });
+
+    cron.schedule("*/10 * * * * *", async () => {
+      service.updateServiceStatus()  
+    });
+
+    cron.schedule("0 */5 * * * *", async () => {
+      service.sendServiceStatus()  
+    });
+
+  }
+  
 
   app.use(function(req, res, next) {
     next(createError(404));
