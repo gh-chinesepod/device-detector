@@ -17,6 +17,9 @@ module.exports = {
         
         let devices = await getArpList();
 
+        // console.log(devices)
+        // return;
+
         const minIdle = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
         let networkDevices = await ciscoModel.findQuery({ officeLocation: process.env.officeLocation, notification: false })
@@ -187,7 +190,8 @@ async function getArpList() {
 
                 const ip = match[1];
                 const mac = match[2];
-
+                console.log("wait for 2 sec to cal get vendor")
+                await new Promise(r => setTimeout(r, 2000));
                 const vendor = await getVendor(mac);
 
                 devices.push({ ip, mac, vendor });
@@ -204,6 +208,7 @@ async function getVendor(mac) {
     //   console.log("======>>>", url)
     const res = await fetch(url);
     const data = await res.json();
+    console.log(data)
     return data.company || "Unknown Vendor";
 
     //   const url = `https://api.macvendors.com/${mac}`;

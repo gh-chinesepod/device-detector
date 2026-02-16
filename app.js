@@ -47,7 +47,7 @@ conn.connectToServer( async function( err, client ) { // MAIN MONGO START
     return;
   } else {
 
-    cron.schedule('0 8-16 * * 1-5', () => {
+    cron.schedule('0 8-16 * * * *', () => {
       service.runCiscoDetector()  
     });
 
