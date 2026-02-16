@@ -10,15 +10,21 @@ const helpers = require('../helpers')
 module.exports = {
     runCiscoDetector: async function () {
 
-        let newDevices = []
+        // delete devices last active more than 10 days
+        const maxIdle = new Date(Date.now() - 10 * (24 * 60 * 60 * 1000));
+        let oldDevices = await ciscoModel.findQuery({ lastActive: { $lt: maxIdle } })
+        
+        if (oldDevices && oldDevices.length > 0) {
+            console.log(oldDevices)
+            for (const device of oldDevices) {
+                await ciscoModel.remove(device._id)
+            }
+        }
 
         const res = await fetch("https://api.ipify.org?format=json");
         const data = await res.json();
         
         let devices = await getArpList();
-
-        // console.log(devices)
-        // return;
 
         const minIdle = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
@@ -31,6 +37,7 @@ module.exports = {
             { status: false }
         );
 
+        let newDevices = []
         for (const device of devices) {
             // if (device.vendor === "Cisco Systems, Inc") {
 
@@ -110,8 +117,7 @@ module.exports = {
                 console.error("Error sending email:", error);
             }
         }    
-        console.log("########### CISCO DETECTOR FINISHED ##############")
-
+        
     },
 
     updateServiceStatus: async function () {

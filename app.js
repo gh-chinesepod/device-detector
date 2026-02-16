@@ -40,7 +40,7 @@ conn.connectToServer( async function( err, client ) { // MAIN MONGO START
   // await helpers.sendSQSMessage("test 2 visit <a href='mailto:test@test.cc'>test</a>")
   // console.log("-sent-")
   const service = require('./services/detectorService')
-  // service.runCiscoDetector()
+  service.runCiscoDetector()
 
   if (!process.env.officeLocation) {
     console.error("Please set location inside .env file.\nAfter setting officeLocation='<location name>', restart app.");
