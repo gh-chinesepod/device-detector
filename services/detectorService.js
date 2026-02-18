@@ -1,6 +1,7 @@
 var Model = require('./../repositories/_model')
 var ciscoModel = new Model('ciscoMonitoring')
 var ciscoLocationModel = new Model('ciscoLocationMonitoring')
+const { exec } = require("child_process")
 
 const mailgun = require('mailgun-js');
 const mg = mailgun({ apiKey: process.env.mgKey, domain: process.env.mgDomain });
@@ -9,6 +10,9 @@ const helpers = require('../helpers')
 
 module.exports = {
     runCiscoDetector: async function () {
+
+        // refresh network cache
+        await refreshNmap()
 
         // delete devices last active more than 10 days
         const maxIdle = new Date(Date.now() - 10 * (24 * 60 * 60 * 1000));
@@ -180,8 +184,6 @@ module.exports = {
 
 async function getArpList() {
 
-    const { exec } = require("child_process");
-
     return new Promise((resolve, reject) => {
         exec("arp -a", async (err, stdout) => {
             if (err) return reject(err);
@@ -204,6 +206,16 @@ async function getArpList() {
             }
 
             resolve(devices);
+        });
+    });
+}
+
+async function refreshNmap() {
+    console.log("Please wait while executing nmap...")
+    return new Promise((resolve, reject) => {
+        exec("nmap -sn 192.168.48.0/24", async (err, stdout) => {
+            if (err) return reject(err);
+            resolve(stdout);
         });
     });
 }
