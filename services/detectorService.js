@@ -2,7 +2,7 @@ var Model = require('./../repositories/_model')
 var ciscoModel = new Model('ciscoMonitoring')
 var ciscoLocationModel = new Model('ciscoLocationMonitoring')
 const { exec } = require("child_process")
-
+const os = require('os');
 const mailgun = require('mailgun-js');
 const mg = mailgun({ apiKey: process.env.mgKey, domain: process.env.mgDomain });
 
@@ -213,8 +213,9 @@ async function getArpList() {
 
 async function refreshNmap() {
     console.log("Please wait while executing nmap...")
+    let netInfo = getNetworkInfo();
     return new Promise((resolve, reject) => {
-        exec("nmap -sn 192.168.48.0/24", async (err, stdout) => {
+        exec("nmap -sn "+netInfo.network, async (err, stdout) => {
             if (err) return reject(err);
             resolve(stdout);
         });
@@ -234,4 +235,46 @@ async function getVendor(mac) {
     //   const res = await fetch(url);
     //   const data = await res.json();
     // return res.text()
+}
+
+function getNetworkInfo() {
+    const interfaces = os.networkInterfaces();
+
+    for (const name of Object.keys(interfaces)) {
+        for (const net of interfaces[name]) {
+
+            // Skip internal (127.0.0.1) and non-IPv4
+            if (net.family === 'IPv4' && !net.internal) {
+
+                const ip = net.address;
+                const subnetMask = net.netmask;
+
+                const cidr = calculateCIDR(ip, subnetMask);
+
+                return {
+                    interface: name,
+                    ip,
+                    subnetMask,
+                    network: cidr
+                };
+            }
+        }
+    }
+}
+
+function calculateCIDR(ip, mask) {
+    const maskParts = mask.split('.').map(Number);
+    const ipParts = ip.split('.').map(Number);
+
+    // Count mask bits
+    const maskBits = maskParts
+        .map(n => n.toString(2))
+        .map(b => b.padStart(8, '0'))
+        .join('')
+        .split('1').length - 1;
+
+    // Calculate network address
+    const network = ipParts.map((part, i) => part & maskParts[i]).join('.');
+
+    return `${network}/${maskBits}`;
 }
