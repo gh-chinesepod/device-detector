@@ -7,3 +7,7 @@
 - `npm run start` or `node ./bin/device-detector`
 * email notifications and app location can be change on every location, this can be set under `.env` file.
 - `nano Projects/device-detector/.env` find `officeLocation=""` in line 19.
+* Updating app.
+- open terminal and go to root folder `cd Projects/device-detector`
+- execute git `git pull origin master`
+- execute command `pm2 restart 0` or `pm2 restart device-detector`
