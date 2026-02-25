@@ -22,12 +22,12 @@ exports.sendSQSMessage = async (message) => {
         }),
     };
 
-    try {
-        const result = await client.send(new SendMessageCommand(params));
-        console.log("Message sent:", result.MessageId);
-    } catch (err) {
-        console.error("Send error:", err);
-    }
+    // try {
+    //     const result = await client.send(new SendMessageCommand(params));
+    //     console.log("Message sent:", result.MessageId);
+    // } catch (err) {
+    //     console.error("Send error:", err);
+    // }
 
 }
 
