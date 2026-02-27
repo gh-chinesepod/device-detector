@@ -139,7 +139,7 @@ module.exports = {
 
     sendServiceStatus: async function () {
 
-        const minIdle = new Date(Date.now() - 60 * 60 * 1000); // 5min
+        const minIdle = new Date(Date.now() - 5 * 60 * 1000); // 5min
 
        
         let offlineServers = await ciscoLocationModel.findQuery(
