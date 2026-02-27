@@ -126,7 +126,7 @@ module.exports = {
 
     updateServiceStatus: async function () {
 
-        // server update
+        // server update and reset notification
         ciscoLocationModel.upsert(
             { officeLocation: process.env.officeLocation },
             {
@@ -139,25 +139,26 @@ module.exports = {
 
     sendServiceStatus: async function () {
 
-        const minIdle = new Date(Date.now() - 5 * 60 * 1000); // 5min
+        const minIdle = new Date(Date.now() - 60 * 60 * 1000); // 5min
 
        
         let offlineServers = await ciscoLocationModel.findQuery(
-            { lastActive: { $lt: minIdle } },
-            { status: false }
+            { lastActive: { $lt: minIdle }, status: false }
         );
-
+        // console.log(offlineServers)
         // set all to true to avoid multiple sms notification
         ciscoLocationModel.updateMany(
-            { lastActive: { $lt: minIdle } },
-            { status: true }
+            { lastActive: { $lt: minIdle }, status: false },
+            { 
+                status: true
+            }
         );
 
         // send sqs
         if (offlineServers && offlineServers.length > 0) {
             const servers = offlineServers.map(d => d.officeLocation).join(", <br>");
             let message = `Hi, <br> This is a reminder that the device detector in this location(s) was offline. ${servers}`
-            helpers.sendSQSMessage(message) // send to sqs
+            // helpers.sendSQSMessage(message) // send to sqs
 
             const emailData = {
                 from: "Device Detector <dev@chinesepod.com>",
@@ -165,7 +166,7 @@ module.exports = {
                 subject: `Device Detector APP notification`,
                 html: message
             };
-
+            // console.log("email send")
             mg.messages().send(emailData);
         }
 
