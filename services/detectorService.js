@@ -15,7 +15,7 @@ module.exports = {
         await refreshNmap()
 
         // delete devices last active more than 10 days
-        const maxIdle = new Date(Date.now() - 10 * (24 * 60 * 60 * 1000));
+        const maxIdle = new Date(Date.now() - 5 * (24 * 60 * 60 * 1000));
         let oldDevices = await ciscoModel.findQuery({ lastActive: { $lt: maxIdle } })
         
         if (oldDevices && oldDevices.length > 0) {
