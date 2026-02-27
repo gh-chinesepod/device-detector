@@ -83,7 +83,8 @@ module.exports = {
         // }
 
         if (networkDevices && networkDevices.length > 0) {
-            const mac = networkDevices.map(d => d.mac).join(", <br>");
+            // const mac = networkDevices.map(d => d.mac).join(", <br>");
+            const mac = networkDevices.map(d => (d.alias ?? (d.vendor !== "Unknown Vendor" ? d.vendor : d.mac) ) ).join(", <br>");
             htmlContent += `<br><strong>Missing devices in network</strong><br>${mac}`
 
             // update notification true
@@ -99,8 +100,18 @@ module.exports = {
         }
 
         if (newDevices && newDevices.length > 0) {
-            const newmac = newDevices.map(d => d.mac).join(", <br>");
+            const newmac = newDevices.map(d => (d.alias ?? (d.vendor !== "Unknown Vendor" ? d.vendor : d.mac) ) ).join(", <br>");
             htmlContent += `<br><strong>Found new devices in network</strong><br>${newmac}`
+
+            for (const device of newDevices) {
+
+                ciscoModel.upsert(
+                    { mac: device.mac },
+                    {
+                        notification: true
+                    }
+                )
+            }
         }
 
         // SEND EMAIL NOTIFICATION IF networkDevices is not null or newDevices contains data
