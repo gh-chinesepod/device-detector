@@ -124,7 +124,8 @@ module.exports = {
             };
 
             try {
-                const body = await mg.messages().send(emailData);
+                // SUSPEND SENDING OF EMAIL 
+                // const body = await mg.messages().send(emailData);
 
                 helpers.sendSQSMessage(htmlContent)
                 console.log("Email sent successfully:", body);
